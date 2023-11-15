@@ -1,0 +1,2 @@
+bSubThreshold:5
+diffThreshold:50000000
