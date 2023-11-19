@@ -3,17 +3,22 @@ import numpy as np
 
 from tracker import Tracker
 from cell import Cell
+from data_parsing import DataParser
 
 import argparse
+import os
 
 
-def get_settings(settings_file: string):
+def get_settings(settings_file: str):
     settings_map = {}
     with open(settings_file, 'r') as settings:
         for s in settings:
             key, val = s.split(':')
-            if isnumeric(val):
+            val = val[:-1]
+            if val.isnumeric():
                 settings_map[key] = int(val)
+            elif ',' in val:
+                settings_map[key] = val.split(',')
             else:
                 settings_map[key] = val
 
@@ -35,6 +40,14 @@ def get_args():
     parser.add_argument('--file', dest="file")
 
     args = parser.parse_args()
+
+    if not args.file:
+        raise Exception("Please specify a file")
+    elif not os.path.exists(args.file):
+        raise Exception("File does not exist. Please specify a valid path")
+    elif not args.file.endswith(('.mp4', '.cine', '.avi')):
+        raise Exception("File is not of valid format. Please specify a file of \
+                type mp4, cine, or avi")
 
     return args
 
@@ -68,13 +81,14 @@ def setup():
     left, right = get_bounds(frame, w, h)
 
     data['width'] = w
-    data['height']
+    data['height'] = h
     data['leftbound'] = left
     data['rightbound'] = right
 
     tracker = Tracker(left, right)
 
     data['tracker'] = tracker
+    data['dataParser'] = DataParser(settings['trackable'])
 
     cv2.namedWindow("Video Analysis", cv2.WINDOW_NORMAL)
     cv2.resizeWindow("Video Analysis", w, h)
@@ -82,7 +96,7 @@ def setup():
     return data
 
 
-def tracking_loop(data):
+def tracking_loop(data, dp):
 
     while True:
         ret, frame = cap.read()
@@ -104,7 +118,7 @@ def tracking_loop(data):
 def main():
     data = setup()
     
-    tracking_loop()
+    tracking_loop(data)
 
     data['cap'].release()
     cv2.destroyAllWindows()

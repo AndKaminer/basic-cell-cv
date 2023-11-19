@@ -1,5 +1,5 @@
 import cv2
-import numps as np
+import numpy as np
 
 import math
 
