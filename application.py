@@ -4,6 +4,7 @@ import numpy as np
 from tracker import Tracker
 from cell import Cell
 from data_parsing import DataParser
+from detector import Detector
 
 import argparse
 import os
@@ -29,6 +30,7 @@ def get_bounds(frame, window_x, window_y):
     cv2.namedWindow("Select Region", cv2.WINDOW_NORMAL)
     cv2.resizeWindow("Select Region", window_x, window_y)
     r = cv2.selectROI("Select Region", frame, False)
+    cv2.destroyWindow("Select Region")
 
     x1, y1, width, height = r
 
@@ -38,6 +40,7 @@ def get_bounds(frame, window_x, window_y):
 def get_args():
     parser = argparse.ArgumentParser(description="Cell Tracking")
     parser.add_argument('--file', dest="file")
+    parser.add_argument('--dtype', dest="dtype")
 
     args = parser.parse_args()
 
@@ -48,6 +51,11 @@ def get_args():
     elif not args.file.endswith(('.mp4', '.cine', '.avi')):
         raise Exception("File is not of valid format. Please specify a file of \
                 type mp4, cine, or avi")
+
+    if not args.dtype:
+        raise Exception("Please specify a detector type")
+
+    args.dtype = int(args.dtype)
 
     return args
 
@@ -62,7 +70,8 @@ def setup():
         'height',
         'leftbound',
         'rightbound',
-        'tracker'
+        'tracker',
+        'detector'
     """
     settings = get_settings("settings.txt")
     args = get_args()
@@ -90,29 +99,29 @@ def setup():
     data['tracker'] = tracker
     data['dataParser'] = DataParser(settings['trackable'])
 
+    data['detector'] = Detector(data['arguments'].dtype, (0, 255, 0), 2)
+
     cv2.namedWindow("Video Analysis", cv2.WINDOW_NORMAL)
     cv2.resizeWindow("Video Analysis", w, h)
 
     return data
 
 
-def tracking_loop(data, dp):
+def tracking_loop(data):
 
     while True:
-        ret, frame = cap.read()
+        ret, frame = data['cap'].read()
 
         if not ret:
             break
 
-        # TODO - implement the filtered detection stuff
+        data['detector'].draw_bounding_rects(frame)
 
         cv2.imshow("Video Analysis", frame)
 
         key = cv2.waitKey(20)
         if key == 27:
             break
-
-    # TODO - return the data from the loop
 
 
 def main():
