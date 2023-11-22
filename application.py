@@ -99,7 +99,7 @@ def setup():
     data['tracker'] = tracker
     data['dataParser'] = DataParser(settings['trackable'])
 
-    data['detector'] = Detector(data['arguments'].dtype, (0, 255, 0), 2)
+    data['detector'] = Detector(data['arguments'].dtype, (0, 255, 0), 1)
 
     cv2.namedWindow("Video Analysis", cv2.WINDOW_NORMAL)
     cv2.resizeWindow("Video Analysis", w, h)
@@ -107,22 +107,92 @@ def setup():
     return data
 
 
+def edit_contours(frame, window_name):
+    print("Editing Mode On")
+    cv2.setMouseCallback(window_name, draw_point, (frame, window_name))
+    while True:
+        key = cv2.waitKey(10)
+        if key == ord('e'):
+            break
+
+    print("Editing Mode Off")
+        
+
+def draw_point(event, x, y, flags, param):
+    frame, window_name = param[0], param[1]
+    if event == cv2.EVENT_LBUTTONDOWN:
+        cv2.circle(frame, (x, y), 0, (0,255,0), -1)
+        cv2.imshow(window_name, frame)
+
+
+def process_key(key):
+    if key == 27: # esc
+        return 'BREAK'
+    elif key == ord('c'):
+        return 'CONTINUE'
+    elif key == ord('e'):
+        return 'EDIT'
+    elif key == ord('s'):
+        return 'CONTOUR'
+    elif key == ord('r'):
+        return 'RESET'
+    else:
+        return 'REDO'
+
+
 def tracking_loop(data):
+    contours_shown = False
+    frame_num = 0
 
     while True:
         ret, frame = data['cap'].read()
+        frame_num += 1
 
+        print(f"Frame number: {frame_num}")
         if not ret:
             break
+        
+        contour_frame = frame.copy()
+        backup_frame = frame.copy()
+        data['detector'].draw_contour_outline(contour_frame)
 
-        data['detector'].draw_bounding_rects(frame)
+        if not contours_shown:
+            cv2.imshow("Video Analysis", frame)
+        else:
+            cv2.imshow("Video Analysis", contour_frame)
 
-        cv2.imshow("Video Analysis", frame)
+        while True:
+            key = cv2.waitKey(0)
+            action = process_key(key)
+            if action == 'BREAK':
+                print("Exiting")
+                return
+            elif action == 'CONTINUE':
+                print("Continuing")
+                break
+            elif action == 'EDIT':
+                contours_shown = False
+                new_mask = edit_contours(frame, "Video Analysis")
+                continue
+            elif action == 'CONTOUR':
+                if not contours_shown:
+                    contours_shown = True
+                    cv2.imshow("Video Analysis", contour_frame)
+                    print("Contours Shown")
+                else:
+                    contours_shown = False
+                    cv2.imshow("Video Analysis", frame)
+                    print("Contours not shown")
+            elif action == 'RESET':
+                frame = backup_frame
+                backup_frame = frame.copy()
+                cv2.imshow("Video Analysis", frame)
+                print("Clearing Canvas")
+            else:
+                continue
 
-        key = cv2.waitKey(20)
-        if key == 27:
-            break
 
+                
 
 def main():
     data = setup()
