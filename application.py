@@ -116,6 +116,14 @@ def edit_contours(frame, window_name):
             break
 
     print("Editing Mode Off")
+
+
+def get_contours_from_drawing(frame, draw_color):
+    width, height, _ = frame.shape
+    dest = np.zeros((width, height), np.uint8)
+    mask = cv2.inRange(frame, draw_color, draw_color, dest)
+    contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    return contours
         
 
 def draw_point(event, x, y, flags, param):
@@ -136,6 +144,8 @@ def process_key(key):
         return 'CONTOUR'
     elif key == ord('r'):
         return 'RESET'
+    elif key == ord('w'):
+        return 'WRITE'
     else:
         return 'REDO'
 
@@ -154,7 +164,9 @@ def tracking_loop(data):
         
         contour_frame = frame.copy()
         backup_frame = frame.copy()
+        
         data['detector'].draw_contour_outline(contour_frame)
+        _, contours = data['detector'].apply(frame)
 
         if not contours_shown:
             cv2.imshow("Video Analysis", frame)
@@ -188,11 +200,19 @@ def tracking_loop(data):
                 backup_frame = frame.copy()
                 cv2.imshow("Video Analysis", frame)
                 print("Clearing Canvas")
+            elif action == 'WRITE':
+                cv2.imshow("Mask", get_contours_from_drawing(frame, (0, 255, 0)))
+                if contours_shown:
+                    data['tracker'].update(contours)
+                else:
+                    new_contours = get_contours_from_drawing(frame, (0, 255, ))
+                    data['tracker'].update(new_contours)
+                print("Contours written. Continuing to next slide.")
+                break
             else:
+                print("Invalid Char")
                 continue
 
-
-                
 
 def main():
     data = setup()
