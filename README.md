@@ -30,3 +30,7 @@ In editing mode, you can manually highlight the cells using the mouse.
 Whatever is on screen when you hit 'w', be that nothing, manually highlighted cells, an edited guess, or a pure guess, is what is written as data.
 To reset your drawing, hit 'r'.
 To exit editing mode, press 'e' again.
+
+### Settings
+To edit settings, edit the settings.txt file.
+To change the elements that are tracked, add or remove elements from the trackable setting. Do not use spaces.
