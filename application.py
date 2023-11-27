@@ -108,14 +108,24 @@ def setup():
 
 
 def edit_contours(frame, window_name):
+    instance = DrawData(frame, window_name)
     print("Editing Mode On")
-    cv2.setMouseCallback(window_name, draw_point, (frame, window_name))
+    cv2.setMouseCallback(window_name, draw_point, instance)
     while True:
         key = cv2.waitKey(10)
         if key == ord('e'):
             break
-
+    
+    instance.editing = False
     print("Editing Mode Off")
+
+
+class DrawData:
+    def __init__(self, frame, window_name):
+        self.frame = frame
+        self.window_name = window_name
+        self.drawing = False
+        self.editing = True
 
 
 def get_contours_from_drawing(frame, draw_color):
@@ -127,10 +137,16 @@ def get_contours_from_drawing(frame, draw_color):
         
 
 def draw_point(event, x, y, flags, param):
-    frame, window_name = param[0], param[1]
+    if not param.editing:
+        return
     if event == cv2.EVENT_LBUTTONDOWN:
-        cv2.circle(frame, (x, y), 0, (0,255,0), -1)
-        cv2.imshow(window_name, frame)
+        param.drawing = True
+    elif event == cv2.EVENT_LBUTTONUP:
+        param.drawing = False
+    elif event == cv2.EVENT_MOUSEMOVE:
+        if param.drawing:
+            cv2.circle(param.frame, (x, y), 0, (0,255,0), -1)
+            cv2.imshow(param.window_name, param.frame)
 
 
 def process_key(key):
@@ -165,7 +181,7 @@ def tracking_loop(data):
         contour_frame = frame.copy()
         backup_frame = frame.copy()
         
-        data['detector'].draw_contour_outline(contour_frame)
+        data['detector'].draw_contours(contour_frame)
         _, contours = data['detector'].apply(frame)
 
         if not contours_shown:
@@ -201,11 +217,10 @@ def tracking_loop(data):
                 cv2.imshow("Video Analysis", frame)
                 print("Clearing Canvas")
             elif action == 'WRITE':
-                cv2.imshow("Mask", get_contours_from_drawing(frame, (0, 255, 0)))
                 if contours_shown:
                     data['tracker'].update(contours)
                 else:
-                    new_contours = get_contours_from_drawing(frame, (0, 255, ))
+                    new_contours = get_contours_from_drawing(frame, (0, 255, 0))
                     data['tracker'].update(new_contours)
                 print("Contours written. Continuing to next slide.")
                 break

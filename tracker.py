@@ -71,7 +71,7 @@ class Tracker:
         
         # for each cell in the tracked zone, update the cell
         id = self.curr_min_id
-        for i in range(old_cells, len(contours_w_center)):
+        for i in range(old_cells, len(contours_w_centers)):
             if id > self.curr_max_id:
                 break
             else:
