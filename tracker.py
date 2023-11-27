@@ -2,10 +2,11 @@ import cv2
 import numpy as np
 
 from cell import Cell
+from data_parsing import *
 
 class Tracker:
     
-    def __init__(self, left_bound, right_bound):
+    def __init__(self, left_bound, right_bound, dataparser):
         self.num_cells: int = 0 # current number of cells on screen
         self.cell_dict: dict[int, Cell] = {} # the dictionary of cells
         self.curr_max_id: int = -1 # id of the newest cell on screen
@@ -13,6 +14,8 @@ class Tracker:
         self.left_bound = left_bound # left bound of the ROI
         self.right_bound = right_bound # right bound of the ROI
         self.num_old_cells = 0 # the number of old cells no tracked
+        self.timestep = 0
+        self.dataparser = dataparser
 
     def register_cell(self, contour: np.array):
         cell = Cell(contour)
@@ -39,6 +42,7 @@ class Tracker:
             self.cell_dict[cell_id].update(contour)
 
     def update(self, contours: list):
+        self.timestep += 1
         if len(contours) == 0:
             return
 
@@ -88,3 +92,29 @@ class Tracker:
                                      fontScale=1,
                                      color=(0, 255, 0),
                                      thickness=1)
+
+    def get_data(self, attribute):
+
+        dataobj = CellDataObject()
+
+        for id in self.cell_dict.keys():
+            if attribute == 'circ':
+                dp = self.cell_dict[id].calculate_circularity()
+            elif attribute == 'xpos':
+                dp = self.cell_dict[id].calculate_centerpoint()[0]
+            elif attribute == 'ypos':
+                dp = self.cell_dict[id].calculate_centerpoint()[1]
+            elif attribute == 'velo':
+                dp = self.cell_dict[id].calculate_velocity()
+            else:
+                raise Exception("Bruh")
+
+        dataobj[id] = (self.timestep, dp)
+        return dataobj
+
+    def update_dataparser(self):
+        to_add = {} # attr -> CellDataObject
+        for attr in self.dataparser:
+            to_add[attr] = self.get_data(attr)
+            
+        self.dataparser.add_data(to_add)

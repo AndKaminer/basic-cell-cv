@@ -93,11 +93,12 @@ def setup():
     data['height'] = h
     data['leftbound'] = left
     data['rightbound'] = right
+    
+    dp = DataParser(settings['trackable'])
 
-    tracker = Tracker(left, right)
+    tracker = Tracker(left, right, dp)
 
     data['tracker'] = tracker
-    data['dataParser'] = DataParser(settings['trackable'])
 
     data['detector'] = Detector(data['arguments'].dtype, (0, 255, 0), 1)
 

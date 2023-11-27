@@ -19,7 +19,7 @@ class DataParser:
                     trackable setting")
 
         for el in self.to_track:
-            self.collected_data[el] = SingleAttributeParser
+            self.collected_data[el] = SingleAttributeParser()
         
 
     def check_trackable(self, trackable):
