@@ -82,6 +82,8 @@ def setup():
 
     cap = cv2.VideoCapture(args.file)
     data['cap'] = cap
+    data['capwidth'] = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
+    data['capheight'] = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
 
     ret, frame = cap.read()
 
@@ -101,6 +103,8 @@ def setup():
     data['tracker'] = tracker
 
     data['detector'] = Detector(data['arguments'].dtype, (0, 255, 0), 1)
+
+    data['resize_factor'] = 3
 
     cv2.namedWindow("Video Analysis", cv2.WINDOW_NORMAL)
     cv2.resizeWindow("Video Analysis", w, h)
@@ -178,6 +182,8 @@ def tracking_loop(data):
         print(f"Frame number: {frame_num}")
         if not ret:
             break
+
+        frame = cv2.resize(frame, (int(data['capwidth'] * data['resize_factor']), int(data['capheight'] * data['resize_factor'])))
         
         contour_frame = frame.copy()
         backup_frame = frame.copy()

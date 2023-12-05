@@ -1,4 +1,7 @@
 from collections import defaultdict
+import os
+
+import pandas as pd
 
 
 class DataParser:
@@ -38,6 +41,30 @@ class DataParser:
                 raise Exception("Invalid tracker")
 
             self.collected_data[el].add_data(to_add[el])
+
+
+    def write_to_file(self, filename):
+        # make a folder with files for each id. For each id, 
+        # have a df
+        try:
+            os.mkdir("results")
+        except OSError as error:
+            pass
+
+        ids = self.collected_data[self.collected_data.keys()[0]].data.keys()
+
+        for id in ids:
+            pass
+
+
+    def get_dataframe(self, id):
+        attributes = self.collected_data.keys()
+
+        index = [ el[0] for el in self.collected_data[0] ]
+
+        to_df = { attr : [ el[1] for el in self.collected_data[attr].data ] for attr in attributes }
+
+
 
 
 class SingleAttributeParser:
