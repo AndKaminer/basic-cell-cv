@@ -7,94 +7,60 @@ import pandas as pd
 class DataParser:
 
     valid_trackers = set([
-        'circ',
-        'velo',
-        'xpos',
-        'ypos'
+        'circularity',
+        'velocity',
+        'xposition',
+        'yposition'
         ])
 
-    to_track = set()
-    collected_data = {}
+    to_track = []
 
     def __init__(self, trackable):
         if not self.check_trackable(trackable):
             raise Exception("Cannot initialize DataParser. Check the \
                     trackable setting")
 
-        for el in self.to_track:
-            self.collected_data[el] = SingleAttributeParser()
+        self.collected_data = pd.DataFrame(columns=self.to_track)
         
 
     def check_trackable(self, trackable):
         for t in trackable:
             if t not in self.valid_trackers:
+                self.to_track = []
                 return False
             else:
-                self.to_track.add(t)
+                self.to_track.append(t)
 
         return True
 
 
-    def add_data(self, to_add: dict): # to_add is tracker -> CellDataObject
+    def get_tracked(self):
+        return self.to_track
+
+
+    def get_valid_data(self, data):
+        try:
+            new_data = { t : data[t] for t in self.to_track }
+        except Exception as e:
+            raise Exception(f"Data: {data} could not be made valid")
+        return new_data
+
+
+    def add_data(self, to_add: dict, frame_num ): # to_add is tracker -> CellDataObject
         for el in to_add.keys():
-            if not el in self.to_track:
-                raise Exception("Invalid tracker")
+            if el not in self.to_track:
+                raise Exception("Cannot add invalid column to data")
 
-            self.collected_data[el].add_data(to_add[el])
+        if len(to_add.keys()) != len(self.to_track):
+            raise Exception("Missing columns to add to data")
 
+        if frame_num in self.collected_data.index:
+            raise Exception("Trying to overwrite data!")
+
+        self.collected_data.loc[frame_num] = to_add
 
     def write_to_file(self, filename):
-        # make a folder with files for each id. For each id, 
-        # have a df
-        try:
-            os.mkdir("results")
-        except OSError as error:
-            pass
+        self.collected_data.to_csv(path_or_buf=filename)
 
-        ids = self.collected_data[self.collected_data.keys()[0]].data.keys()
-
-        for id in ids:
-            pass
-
-
-    def get_dataframe(self, id):
-        attributes = self.collected_data.keys()
-
-        index = [ el[0] for el in self.collected_data[0] ]
-
-        to_df = { attr : [ el[1] for el in self.collected_data[attr].data ] for attr in attributes }
-
-
-
-
-class SingleAttributeParser:
-
-    def __init__(self):
-        self.data = defaultdict(list) # id -> [(time, dp), ...]
-
-    def add_data(self, data_object):
-        for key in data_object.get_data():
-            self.data[key].append(data_object.get_data()[key])
-
-    def get_chart_objects(self, id):
-        if id not in self.data:
-            raise Exception("Invalid id")
-
-        timesteplist = []
-        valuelist = []
-
-        for time, dp in self.data[id]:
-            timesteplist.append(time)
-            valuelist.append(dp)
-
-
-class CellDataObject:
-
-    def __init__(self):
-        self.id_to_dp = {} # cell_id -> (time, dp)
-
-    def add_datapoint(self, id, time, value):
-        self.id_to_dp[id] = (time, value)
-
-    def get_data(self):
-        return self.id_to_dp
+    def get_dataframe(self):
+        return self.collected_data

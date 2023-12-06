@@ -12,7 +12,7 @@ class Cell:
         self.bounding_rect = cv2.boundingRect(contour)
         self.previous_center = None
 
-        self.velocity_pointers = []
+        self.velocity_points = []
         self.circularity_points = []
         self.area_points = []
         self.location_points = []
@@ -20,13 +20,13 @@ class Cell:
 
     def calculate_centerpoint(self) -> tuple[float, float]:
         M = cv2.moments(self.contour)
-        cX = int(M["m10"] / M["m00"])
-        cY = int(M["m01"] / M["m00"])
+        cX = M["m10"] / M["m00"]
+        cY = M["m01"] / M["m00"]
         return (cX, cY)
 
     def calculate_radius(self) -> float:
 
-        _, radius = cv2.minEnclosingCCircle(self.contour)
+        _, radius = cv2.minEnclosingCircle(self.contour)
         return radius
 
     def calculate_perimeter(self) -> float:
@@ -51,6 +51,20 @@ class Cell:
         area = self.calculate_area()
         perimeter = self.calculate_perimeter()
         return 4 * math.pi * area / (perimeter ** 2)
+
+    def get_all_calcs(self):
+        data = {}
+        centerpoint = self.calculate_centerpoint()
+        data['center'] = centerpoint
+        data['xposition'] = centerpoint[0]
+        data['yposition'] = centerpoint[1]
+        data['radius'] = self.calculate_radius()
+        data['perimeter'] = self.calculate_perimeter()
+        data['area'] = self.calculate_velocity()
+        data['velocity'] = self.calculate_velocity()
+        data['circularity'] = self.calculate_circularity()
+
+        return data
 
     def update(self, contour):
         self.previous_center = self.calculate_centerpoint()

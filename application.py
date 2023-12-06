@@ -167,11 +167,14 @@ def process_key(key):
         return 'RESET'
     elif key == ord('w'):
         return 'WRITE'
+    elif key == ord('z'):
+        return 'SAVE'
     else:
         return 'REDO'
 
 
 def tracking_loop(data):
+    cell_found = False
     contours_shown = False
     frame_num = 0
 
@@ -188,8 +191,8 @@ def tracking_loop(data):
         contour_frame = frame.copy()
         backup_frame = frame.copy()
         
-        data['detector'].draw_contours(contour_frame)
-        _, contours = data['detector'].apply(frame)
+        data['detector'].draw_contours(contour_frame, main=True)
+        contours = data['detector'].get_main_contour(frame)
 
         if not contours_shown:
             cv2.imshow("Video Analysis", frame)
@@ -225,12 +228,15 @@ def tracking_loop(data):
                 print("Clearing Canvas")
             elif action == 'WRITE':
                 if contours_shown:
-                    data['tracker'].update(contours)
+                    data['tracker'].update(contours, frame_num)
                 else:
                     new_contours = get_contours_from_drawing(frame, (0, 255, 0))
-                    data['tracker'].update(new_contours)
+                    data['tracker'].update(new_contours, frame_num)
                 print("Contours written. Continuing to next slide.")
                 break
+            elif action == 'SAVE':
+                data['tracker'].save_data('output.csv')
+                print('Data saved to output.csv')
             else:
                 print("Invalid Char")
                 continue

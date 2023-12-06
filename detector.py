@@ -23,9 +23,25 @@ class Detector:
         contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         return mask, contours
 
-
-    def draw_contours(self, frame):
+    def get_main_contour(self, frame):
         mask, contours = self.apply(frame)
+
+        contours = list(contours)
+        
+        contours.sort(key=lambda cnt : cv2.contourArea(cnt))
+
+        if contours:
+            contours = tuple(contours[-1:])
+        else:
+            contours = tuple()
+        return contours
+
+
+    def draw_contours(self, frame, main=False):
+        if main:
+            contours = self.get_main_contour(frame)
+        else:
+            _, contours = self.apply(frame)
         cv2.drawContours(frame, contours, -1, self.drawing_color,
                          self.drawing_thickness)
 

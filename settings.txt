@@ -2,4 +2,4 @@ bSubThreshold:5
 diffThreshold:50000000
 width:1920
 height:1080
-trackable:velo,circ,xpos
+trackable:velocity,circularity,xposition
