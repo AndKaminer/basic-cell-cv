@@ -1,5 +1,7 @@
 # basic-cell-cv
 
+**THIS REPOSITORY IS DEPRECATED AND BAD DONT USE IT**
+
 ## Requirements:
  - opencv
  - python 3
